@@ -148,12 +148,19 @@ class TickerBase():
 
         # Getting data from json
         url = "{}/v8/finance/chart/{}".format(self._base_url, self.ticker)
-        data = _requests.get(url=url, params=params, proxies=proxy)
-        if "Will be right back" in data.text:
-            raise RuntimeError("*** YAHOO! FINANCE IS CURRENTLY DOWN! ***\n"
-                               "Our engineers are working quickly to resolve "
-                               "the issue. Thank you for your patience.")
-        data = data.json()
+        for retries in range(0, 5):
+            try:
+                data = _requests.get(url=url, params=params, proxies=proxy)
+                if "Will be right back" in data.text:
+                    raise RuntimeError("*** YAHOO! FINANCE IS CURRENTLY DOWN! ***\n"
+                                       "Our engineers are working quickly to resolve "
+                                       "the issue. Thank you for your patience.")
+                data = data.json()
+            except:
+                print('yfinance JSONDecodeError, retyring: ' + str(retries))
+                print('ticker: ' + self.ticker + 'start: ' +
+                      str(start) + ';end: ' + str(end))
+                _time.sleep(5 * retries)
 
         # Work with errors
         debug_mode = True
